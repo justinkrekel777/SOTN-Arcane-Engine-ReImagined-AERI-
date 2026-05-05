@@ -32,6 +32,7 @@ local mannaprism_img = ".\\Assets\\manna_prism.png"
 local swordbro_img = ".\\Assets\\sword_bro1.png"
 local noswordbro_img = ".\\Assets\\sword_bro2.png"
 local librarycard_img = ".\\Assets\\library_card.png"
+local wallet_img = ".\\Assets\\treasure_chest.png"
 
 ------------------------------------------------------------
 -- ANIMATION SYSTEM INITIALIZATION
@@ -307,6 +308,8 @@ local Hellfire_Select = config["Hellfire_Select"]
 local Dark_Metamorphosis_Select = config["Dark_Metamorphosis_Select"]
 local Soul_Steal_Select = config["Soul_Steal_Select"]
 local Sword_Brothers_Select = config["Sword_Brothers_Select"]
+local Weapon_Arts_Select = config["Weapon_Arts_Select"]
+
 local Wolf_Dash_Button = config["Wolf_Dash_Button"]
 local Shield_Dash_Button = config["Shield_Dash_Button"]
 
@@ -320,6 +323,7 @@ local gj_sf  = StringToNumber(config["Gravity_Jump_STEPFRAMES"])
 local gj_gcd = StringToNumber(config["Gravity_Jump_GLOBALCOOLDOWN"])
 local sd_iw = StringToNumber(config["Shield_Dash_INTERVALWAIT"])
 local sd_afd = StringToNumber(config["Shield_Dash_AUTOFIREDELAY"])
+local wa_gcd = StringToNumber(config["Weapon_Arts_GLOBALCOOLDOWN"])
 local sum_sf = StringToNumber(config["Summon_Spirit_STEPFRAMES"])
 local sum_gcd = StringToNumber(config["Summon_Spirit_GLOBALCOOLDOWN"])
 local tet_gcd = StringToNumber(config["Tetra_Spirit_GLOBALCOOLDOWN"])
@@ -417,6 +421,33 @@ end
 
 function Library_Card_Count_UI()
     local v = config["Enable_Library_Card_Count_UI"]
+    if type(v) == "table" then
+        v = v[1]
+    end
+    if not v then return false end
+    return v:lower() == "true"
+end
+
+function Manna_Prism_Count_UI()
+    local v = config["Enable_Manna_Prism_Count_UI"]
+    if type(v) == "table" then
+        v = v[1]
+    end
+    if not v then return false end
+    return v:lower() == "true"
+end
+
+function Wallet_UI()
+    local v = config["Enable_Wallet_UI"]
+    if type(v) == "table" then
+        v = v[1]
+    end
+    if not v then return false end
+    return v:lower() == "true"
+end
+
+function AERI_Palette()
+    local v = config["AERI_Menu_Palette"]
     if type(v) == "table" then
         v = v[1]
     end
@@ -580,6 +611,7 @@ local SPELL_SWORD_BROTHERS = 6
 local SPELL_WING_SMASH = 7
 local SPELL_WOLF_DASH = 8
 local SPELL_GRAVITY_JUMP = 9
+local SPELL_WEAPON_ARTS = 10
 
 -- Spell Data Tables
 local SPELL_DATA = {
@@ -594,7 +626,40 @@ local SPELL_DATA = {
 
     [SPELL_WING_SMASH] = { id = 7, name = "Wing Smash", cost = 8, steps = 7, stepframes = ws_sf, cooldown = ws_gcd, buffer = ws_buf },
     [SPELL_WOLF_DASH] = { id = 8, name = "Wolf Dash", cost = 10, steps = 6, stepframes = wd_sf, cooldown = wd_gcd, buffer = 0 },
-    [SPELL_GRAVITY_JUMP] = { id = 9, name = "Gravity Jump", cost = 4, steps = 6, stepframes = gj_sf, cooldown = gj_gcd, buffer = 0 }
+    [SPELL_GRAVITY_JUMP] = { id = 9, name = "Gravity Jump", cost = 4, steps = 6, stepframes = gj_sf, cooldown = gj_gcd, buffer = 0 },
+    [SPELL_WEAPON_ARTS] = { id = 10, name = "Weapon Arts", cost = 5, steps = 5, stepframes = 2, cooldown = wa_gcd, buffer = 0 }
+}
+
+-- weapon set ID table  recall
+local weaponSet = {
+  [18] = 1, -- basilard
+  [20] = 1, -- combat knife
+  [109] = 2, -- jewel sword
+  [28] = 2, -- shotel
+  [23] = 2, -- rapier
+  [22] = 2, -- were bane
+  [112] = 2, -- thunderbrand
+  [113] = 2, -- icebrand
+  [111] = 2, -- firebrand
+  [115] = 2, -- holy sword
+  [121] = 2, -- gurthang
+  [117] = 2, -- marsil
+  [123] = 2, -- alucard sword
+  [98] = 1, -- claymore
+  [101] = 1, -- flamberge
+  [17] = 2, -- sword of dawn
+  [103] = 1, -- zwei hander
+  [107] = 1, -- obsidian sword
+  [100] = 1, -- katana
+  [139] = 2, -- osafune katana
+  [140] = 2, -- masamune
+  [4] = 1, -- shield rod
+  [130] = 1, -- holy rod
+  [131] = 1, -- star flail
+  [132] = 2, -- moon rod
+  [102] = 2, -- iron fist
+  [120] = 2, -- fist of tulkas
+  [119] = 3 -- heaven sword
 }
 
 -- getter initialization
@@ -610,14 +675,14 @@ local pad = {}
 ------------------------------------------------------------
 -- RAM READER (spell/movement)
 ------------------------------------------------------------
-local ramTransformFlag  = memory.read_u16_le(0x097BF8)
 local ramFormHandler = memory.read_u16_le(0x073484)
 local ramTileCollide = memory.read_u16_le(0x072F20)
-local ramP1Control = memory.read_u16_le(0x03C9A4)
+local ramP1Control = memory.readbyte(0x03C9A4)
 local ramMP = memory.read_u16_le(0x097BB0)
 local ramMPMAX = memory.read_u16_le(0x097BB4)
-local ramShop = memory.read_u16_le(0x097400)
+local ramShop = memory.readbyte(0x097400)
 local ramLibCard = memory.readbyte(0x097A30)
+local ramMannaPrism = memory.readbyte(0x097A2C)
 
 ------------------------------------------------------------------------------------------------------------------------
 -- GLOBAL PAUSE GATE (Prevents code below from executing in map/menu and stops timing desync on room transitions)
@@ -665,10 +730,10 @@ local Hellfire_Select = isDown(Hellfire_Select)
 local Dark_Metamorphosis_Select = isDown(Dark_Metamorphosis_Select)
 local Soul_Steal_Select = isDown(Soul_Steal_Select)
 local Sword_Brothers_Select = isDown(Sword_Brothers_Select)
+local Weapon_Arts_Select = isDown(Weapon_Arts_Select)
+
 local Wolf_Dash_Press = isDown(Wolf_Dash_Button)
 local Shield_Dash_Press = isDown(Shield_Dash_Button)
-
-
 
 -- insert into the beginning of input sequencer steps to prevent input bleed
 function InputsToNeutral()
@@ -716,8 +781,9 @@ if debugmode() then
         if Dark_Metamorphosis_Select then console.log("DARK METAMORPHOSIS INPUT REGISTERED") end
         if Soul_Steal_Select then console.log("SOUL STEAL INPUT REGISTERED") end
         if Sword_Brothers_Select then console.log("SWORD BROTHERS INPUT REGISTERED") end
+        if Weapon_Arts_Select then console.log("WEAPON ARTS INPUT REGISTERED") end
         if Wolf_Dash_Press then console.log("WOLF DASH BUTTON INPUT REGISTERED") end
-        if Shield_Dash_Press then console.log("Shield DASH BUTTON INPUT REGISTERED") end
+        if Shield_Dash_Press then console.log("SHIELD DASH BUTTON INPUT REGISTERED") end
 
         -- blank seperator line
         console.log(" ")
@@ -794,10 +860,52 @@ function UpdateSpellCooldown()
     end
 end
 
+-- checks if alucard is bat or wolf
+function QueryNotTransformed()
+    return (
+            (ramFormHandler ~= 226) -- wolf L/R sprinting
+            or (ramFormHandler ~= 224) -- wolf L/R moving
+            or (ramFormHandler ~= 222) --wolf stopped standing
+            or (ramFormHandler ~= 233) -- wolf stopped sitting
+            or (ramFormHandler ~= 225) -- wolf turning
+        )
+        or (
+            (ramFormHandler ~= 194) -- bat L/R moving
+            or (ramFormHandler ~= 195) -- bat slowing down
+            or (ramFormHandler ~= 196) -- bat stopped
+            or (ramFormHandler ~= 197) -- bat moving down
+            or (ramFormHandler ~= 198) -- bat wing smashing
+        )
+ end
+
 -- checks if alucard has landed between movement skills
 function QueryHasLanded()
-    if ramTransformFlag == 0 and (ramFormHandler == 35 or ramFormHandler == 29 or ramFormHandler <= 20) then
+    if QueryNotTransformed() and (ramFormHandler == 35 or ramFormHandler == 29 or ramFormHandler <= 20) then
         HasLanded = true
+    end
+end
+
+-- check which combo a weapon spec uses
+function QueryWeaponSpecialSet()
+    local weaponID = memory.readbyte(0x097C00)
+    return weaponSet[weaponID] or 0
+end
+
+-- checks if alucard has been hitstunned or and resets running cooldowns
+function QuerySpellReset()
+    if (ramFormHandler == 48 or ramFormHandler == 49 or ramFormHandler == 50 or ramFormHandler == 52) -- hit stun
+        or (ramFormHandler == 202) -- wolf/bat bonk
+        or (ramFormHandler == 60) -- hellfire shooting
+        or ((ramTileCollide == 34 --grav bonk
+            or ramTileCollide == 38 --grav bonk
+            or ramTileCollide == 42 --grav bonk
+            or (ramTileCollide > 2000 and ramTileCollide < 4000)) --grav bonk
+                and ramFormHandler < 100 --grav bonk
+        ) then
+        if spell_cooldown > 0 or spell_state ~= 0 then
+            spell_exit()
+            spell_cooldown = 0
+        end
     end
 end
 
@@ -859,7 +967,6 @@ function WingSmash_OK()
             or (ramFormHandler == 197) -- bat moving down
             or (ramFormHandler == 198) -- bat wing smashing
         )
-        and (ramTransformFlag == 1) -- is transformed
 end
 
 -- wing smash chain check
@@ -872,6 +979,7 @@ end
 -- wolf dash check
 function WolfDash_OK()
     return CanControl()
+        and memory.readbyte(0x09796A) == 3 -- has skill of wolf
         and wd_assist()
         and HasMP(SPELL_WOLF_DASH)
         and (
@@ -881,21 +989,22 @@ function WolfDash_OK()
             or (ramFormHandler == 233) -- wolf stopped sitting
             or (ramFormHandler == 225) -- wolf turning
         )
-        and (ramTransformFlag == 1) -- is transformed
 end
 
 -- gravity jump check
 function GravityJump_OK()
     return CanControl()
+        and memory.readbyte(0x097970) == 3 -- has gravity boots
         and gj_assist()
         and HasMP(SPELL_GRAVITY_JUMP)
         and ramFormHandler < 100 -- human form
-        and (ramTransformFlag == 0) -- gravity jump not happening
+        and QueryNotTransformed()
 end
 
 -- gravity jump chain check
 function GravityJumpChain_OK()
     return CanControl()
+        and memory.readbyte(0x097970) == 3 -- has gravity boots
         and gj_assist()
         and HasMP(SPELL_GRAVITY_JUMP)
         and HasLanded == false
@@ -905,22 +1014,23 @@ end
 -- shield dash check
 function ShieldDash_OK()
     return CanControl()
+        and ramFormHandler ~= 19 --prevents crouch loop
         and sd_assist()
-        and (ramTransformFlag == 0)
         and (ramTileCollide ~= 32)
         and spell_cooldown <= 0
         and spell_state == 0
+        and QueryNotTransformed()
 end
 
 -- cast trigger check
 function Cast_OK()
     return CanControl()
-        and (ramTransformFlag == 0) -- not transformed
-        and (ramTileCollide ~= 32)
         and HasMP(SELECTED_SPELL)
         and spell_cooldown <= 0
         and spell_state == 0
         and SELECTED_SPELL ~= 0
+        and QueryNotTransformed()
+        and ((SELECTED_SPELL == 10) or (SELECTED_SPELL ~= 10 and ramTileCollide ~= 32)) --allow weapon arts to bypass grounded check
 end
 
 ------------------------------------------------------------------------------------------------------------------------
@@ -934,16 +1044,12 @@ UpdateControlFrame()
 UpdateFacing(LeftPress, RightPress)
 UpdateLastLRFrame()
 QueryHasLanded()
+QuerySpellReset()
 UpdateSpellCooldown()
 
 ------------------------------------------------------------
 -- WING SMASH INPUT DETECTION (finsihed)
 ------------------------------------------------------------
--- bonk reset
-if ramFormHandler == 202 then
-    spell_cooldown = 0
-end
-
 if spell_cooldown <= 0 and spell_state == 0 then
 spell_running_cooldown = nil
 
@@ -1090,11 +1196,6 @@ end
 ------------------------------------------------------------
 -- WOLF DASH INPUT DETECTION (finished)
 ------------------------------------------------------------
--- bonk reset
-if ramFormHandler == 202 then
-    spell_cooldown = 0
-end
-
 if spell_cooldown <= 0 and spell_state == 0 then
 spell_running_cooldown = nil
 
@@ -1185,11 +1286,6 @@ end
 ------------------------------------------------------------
 -- GRAVITY JUMP INPUT DETECTION (finished)
 ------------------------------------------------------------
--- bonk reset
-if (ramTileCollide == 34 or ramTileCollide == 38 or ramTileCollide == 42 or (ramTileCollide > 2000 and ramTileCollide < 4000)) and ramFormHandler < 100 then
-    spell_cooldown = 0
-end
-
 if spell_cooldown <= 0 and spell_state == 0 then
 spell_running_cooldown = nil
 
@@ -1311,7 +1407,7 @@ end
 -- SPELL SELECTION SYSTEMS (finished)
 ------------------------------------------------------------
 if spell_cooldown == 0 then
-    
+
     if ClearPress then
         SELECTED_SPELL = SPELL_NONE
     elseif Summon_Spirit_Select then
@@ -1326,12 +1422,14 @@ if spell_cooldown == 0 then
         SELECTED_SPELL = SPELL_SOUL_STEAL
     elseif Sword_Brothers_Select then
         SELECTED_SPELL = SPELL_SWORD_BROTHERS
+    elseif Weapon_Arts_Select then
+        SELECTED_SPELL = SPELL_WEAPON_ARTS
     end
 
 end
 
 ------------------------------------------------------------
--- CAST TRIGGER (add double tap quickfires?)
+-- CAST TRIGGER (add double tap quickfires?) recall
 ------------------------------------------------------------
 if Cast_OK() and CastPress then
     if  SELECTED_SPELL ~= SPELL_SWORD_BROTHERS then
@@ -1778,7 +1876,7 @@ if spell_state == getSpellID(SPELL_SOUL_STEAL) then
 end
 
 ------------------------------------------------------------
--- SWORD BROTHERS
+-- SWORD BROTHERS (finished)
 ------------------------------------------------------------
 if spell_state == getSpellID(SPELL_SWORD_BROTHERS) then
 
@@ -1874,6 +1972,123 @@ if spell_state == getSpellID(SPELL_SWORD_BROTHERS) then
 end
 
 
+------------------------------------------------------------
+-- WEAPON ARTS  recall
+------------------------------------------------------------
+if spell_state == getSpellID(SPELL_WEAPON_ARTS) then
+
+    spell_timer = spell_timer + 1
+
+    if spell_timer >= getSpellFramesPerStep(SPELL_WEAPON_ARTS) then
+        spell_timer = 0
+        spell_step = spell_step + 1
+    end
+
+    if QueryWeaponSpecialSet() == 1 then -- ←→ + [Attack]
+
+        -- RIGHT VERSION
+        if spell_direction == "Right" then
+
+            if spell_step == 0  then
+                InputsToNeutral()
+            elseif spell_step == 1  then
+                InputsToNeutral()
+                pad["P1 D-Pad Left"] = true
+            elseif spell_step == 2  then
+                InputsToNeutral()
+                pad["P1 D-Pad Right"] = true
+            elseif spell_step == 3  then
+                InputsToNeutral()
+                pad["P1 □"] = true
+                spell_step = 5
+            end
+
+        -- LEFT VERSION
+        elseif spell_direction == "Left" then
+
+           if spell_step == 0  then
+                InputsToNeutral()
+            elseif spell_step == 1  then
+                InputsToNeutral()
+                pad["P1 D-Pad Right"] = true
+            elseif spell_step == 2  then
+                InputsToNeutral()
+                pad["P1 D-Pad Left"] = true
+            elseif spell_step == 3  then
+                InputsToNeutral()
+                pad["P1 □"] = true
+                spell_step = 5
+            end
+        end
+
+    elseif QueryWeaponSpecialSet() == 2 then -- ↓↘→ + [Attack]
+
+         -- RIGHT VERSION
+        if spell_direction == "Right" then
+
+            if spell_step == 0  then
+                InputsToNeutral()
+            elseif spell_step == 1  then
+                InputsToNeutral()
+                pad["P1 D-Pad Down"] = true
+            elseif spell_step == 2  then
+                InputsToNeutral()
+                pad["P1 D-Pad Down"] = true
+                pad["P1 D-Pad Right"] = true
+            elseif spell_step == 3  then
+                InputsToNeutral()
+                pad["P1 D-Pad Right"] = true
+            elseif spell_step == 4  then
+                InputsToNeutral()
+                pad["P1 □"] = true
+            end
+
+        -- LEFT VERSION
+        elseif spell_direction == "Left" then
+
+           if spell_step == 0  then
+                InputsToNeutral()
+            elseif spell_step == 1  then
+                InputsToNeutral()
+                pad["P1 D-Pad Down"] = true
+            elseif spell_step == 2  then
+                InputsToNeutral()
+                pad["P1 D-Pad Down"] = true
+                pad["P1 D-Pad Left"] = true
+            elseif spell_step == 3  then
+                InputsToNeutral()
+                pad["P1 D-Pad Left"] = true
+            elseif spell_step == 4  then
+                InputsToNeutral()
+                pad["P1 □"] = true
+            end
+        end
+
+    elseif QueryWeaponSpecialSet() == 3 then  -- heaven sword spec
+
+         if spell_step == 0  then
+            InputsToNeutral()
+         elseif spell_step == 1 then
+            InputsToNeutral()
+            pad["P1 □"] = true
+            pad["P1 ○"] = true
+            spell_step = 5
+        end
+
+    end
+
+    -- exit cleanly
+    if spell_step >= getSpellSteps(SPELL_WEAPON_ARTS) then
+        spell_exit()
+    end
+end
+
+-- ←→ + [Attack]
+
+--set2: ↓↘→ + [Attack]
+
+--set3: heaven sword
+
 ------------------------------------------------------------------------------------------------------------------------
 -- OVERLAY UI DRAW BLOCK (Clears in map/menus)
 ------------------------------------------------------------------------------------------------------------------------
@@ -1922,17 +2137,19 @@ elseif UIspellID == 8 then
     UIspellname = "   Wolf Charge    "
 elseif UIspellID == 9 then
     UIspellname = "   Gravity Jump   "
+elseif UIspellID == 10 then
+    UIspellname = "  Critical  Arts  "
 end
 
 ------------------------------------------------------------
 -- MP COST DAGGER AND EXTRA ICONS UI
 ------------------------------------------------------------
--- MP bar config (match your existing UI)
+-- MP bar config
 local MP_BAR_WIDTH = 50
 
--- arrow offsets (tweak these to align with your art)
+-- arrow offsets
 local MP_ARROW_OFFSET_X = -2 -- offset from left most pixel
-local MP_ARROW_OFFSET_Y = 13  -- sits slightly above bar usually
+local MP_ARROW_OFFSET_Y = 13  -- sits slightly above bar
 
 function DrawMPProjectionArrow(barX, barY, currentMP, maxMP, spellID)
 
@@ -1962,10 +2179,10 @@ function DrawMPProjectionArrow(barX, barY, currentMP, maxMP, spellID)
     if UIspellID ~= 0 then
         texcolor = "white"
         if UIspellID == 6 then
-            if memory.readbyte(0x09797A) ~= 3 then
+            if memory.readbyte(0x09797A) ~= 3 then --no sword card
                 textcolor = "red"
                 gui.drawImage(noswordbro_img, 15, 43)
-            elseif memory.readbyte(0x09797A) == 3 then
+            elseif memory.readbyte(0x09797A) == 3 then --sword card on
                 texcolor = "white"
                 gui.drawImage(swordbro_img, 15, 43)
             end
@@ -1978,7 +2195,7 @@ function DrawMPProjectionArrow(barX, barY, currentMP, maxMP, spellID)
                 gui.drawImage(nomp_arrow_img, arrowX, arrowY)
             end
 
-        elseif UIspellID ~= 6 then
+        elseif UIspellID ~= 6 and UIspellID ~= 10 then
 
             if HasMP(UIspellID) then
                 texcolor = "white"
@@ -1987,6 +2204,28 @@ function DrawMPProjectionArrow(barX, barY, currentMP, maxMP, spellID)
                 textcolor = "red"
                 gui.drawImage(nomp_arrow_img, arrowX, arrowY)
                 gui.drawImage(mannaprism_img, 17, 53)
+            end
+
+        elseif UIspellID == 10 then
+
+            if QueryWeaponSpecialSet() == 0 then --no special
+                textcolor = "red"
+            elseif QueryWeaponSpecialSet() == 1 or QueryWeaponSpecialSet() == 2 then --has special
+                texcolor = "white"
+            elseif QueryWeaponSpecialSet() == 3 then --is heaven sword
+                if memory.readbyte(0x097C00) == memory.readbyte(0x097C04) then --heaven sword x2 check
+                   texcolor = "white"
+               else
+                   textcolor = "red"
+               end
+            end
+
+            if HasMP(UIspellID) then
+                texcolor = "white"
+                gui.drawImage(mp_arrow_img, arrowX, arrowY)
+            else
+                textcolor = "red"
+                gui.drawImage(nomp_arrow_img, arrowX, arrowY)
             end
         end
     end
@@ -2087,6 +2326,37 @@ if Spellbook_UI() then
     gui.drawImage(cdglassframe_img, CDmeterX - 2, CDmeterY-2)
 end
 
+-- show current LC count
+if Library_Card_Count_UI() then
+    gui.drawImage(librarycard_img, 271, 35)
+    gui.pixelText(272, 47, tostring(ramLibCard), "white", 0x00000000, 1)
+end
+
+-- show current manna prism count
+if Manna_Prism_Count_UI() then
+    gui.drawImage(mannaprism_img, 273, 75)
+    gui.pixelText(272, 92, tostring(ramMannaPrism), "white", 0x00000000, 1)
+end
+
+-- show gold count plus sellable gems
+if Wallet_UI() then
+    local wallet = (memory.read_u32_le(0x097BF0) --gold
+    +  (memory.readbyte(0x097A72) * 150)-- zircon 150
+    +  (memory.readbyte(0x097A73) * 800)-- aquamarine 800
+    +  (memory.readbyte(0x097A74) * 1500)-- turquoise 1500
+    +  (memory.readbyte(0x097A75) * 3000)-- onyx 3000
+    +  (memory.readbyte(0x097A76) * 5000)-- garnet 5000
+    +  (memory.readbyte(0x097A77) * 8000)-- opal 8000
+    +  (memory.readbyte(0x097A78) * 20000)-- diamond 20000
+    )
+
+    if wallet > 999999 then
+        wallet = "Stonks!"
+    end
+    gui.drawImage(wallet_img, 229, 21)
+    gui.pixelText(239, 22, ":" .. tostring(wallet), "gold", 0x00000000, 1)
+end
+
 ------------------------------------------------------------
 -- DEBUG: OSD UI DRAW
 ------------------------------------------------------------
@@ -2095,11 +2365,11 @@ if RamOSD() then
 
 local RamOSD_bg = 0xA0000000
 local RamOSD_offsetX = 185
-local RamOSD_offsetY = 178
+local RamOSD_offsetY = 171
 
     RamOSD_X = RamOSD_offsetX
     RamOSD_Y = RamOSD_offsetY
-    gui.drawBox(RamOSD_X, RamOSD_Y, RamOSD_X + 100, RamOSD_Y + 49, "black", RamOSD_bg)
+    gui.drawBox(RamOSD_X, RamOSD_Y, RamOSD_X + 100, RamOSD_Y + 42, "black", RamOSD_bg)
         gui.pixelText(RamOSD_X, RamOSD_Y, "RAM READ OSD", "white", 0x00000000, 1)
     RamOSD_Y = RamOSD_Y + 14
         gui.pixelText(RamOSD_X, RamOSD_Y, "ramP1Control:" .. ramP1Control, "white", 0x00000000, 1)
@@ -2107,8 +2377,6 @@ local RamOSD_offsetY = 178
             gui.pixelText(RamOSD_X, RamOSD_Y, "ramShop:" .. ramShop, "white", 0x00000000, 1)
     RamOSD_Y = RamOSD_Y + 7
         gui.pixelText(RamOSD_X, RamOSD_Y, "ramFormHandler:" .. ramFormHandler, "white", 0x00000000, 1)
-    RamOSD_Y = RamOSD_Y + 7
-        gui.pixelText(RamOSD_X, RamOSD_Y, "ramTransformFlag:" .. ramTransformFlag, "white", 0x00000000, 1)
     RamOSD_Y = RamOSD_Y + 7
         gui.pixelText(RamOSD_X, RamOSD_Y, "ramTileCollide:" .. ramTileCollide, "white", 0x00000000, 1)
 end
@@ -2170,9 +2438,6 @@ local LogicOSD_offsetY = 157
 
 end
 
-
-
-
 ------------------------------------------------------------------------------------------------------------------------
 -- CLOSE GLOBAL PAUSE (anything below here runs during map/menu/transitions)
 ------------------------------------------------------------------------------------------------------------------------
@@ -2227,10 +2492,13 @@ if Active_Assists_UI() then
     end
 end
 
--- show current LC count
-if Library_Card_Count_UI() then
-    gui.drawImage(librarycard_img, 250, 228)
-    gui.pixelText(260, 230, ":" .. tostring(ramLibCard), "white", 0x00000000, 1)
+-- AERI menu colors
+if AERI_Palette() then
+    if memory.readbyte(0x03CAC0) ~= 2 or memory.readbyte(0x03CAC4) ~= 0 or memory.readbyte(0x03CAC8) ~= 6 then
+        memory.writebyte(0x03CAC0, 2)
+        memory.writebyte(0x03CAC4, 0)
+        memory.writebyte(0x03CAC8, 6)
+    end
 end
 
 ------------------------------------------------------------------------------------------------------------------------

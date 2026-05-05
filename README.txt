@@ -33,7 +33,8 @@ Getting started with AERI:
 
 
 Compatibility:
-This script has been tested in conjunction with Archipelago and SOTN.io randomizers and is fully compatible (as far as I know)
+Script written and tested using Bizhawk ver 2.11 and SOTN NymaFastCore
+Tested in conjunction with Archipelago and SOTN.io randomizers and is fully compatible (as far as I know)
 It is also fully compatible with the map location tracker in SOTN Rando Tools (again, as far as my testing goes)
 This script may not be compatible with other input read/execution scripts or scripts that edit certain ram addresses (have not done testing)
 
@@ -57,6 +58,8 @@ Basic debugging:
 5. Run the new (backup) script
 
 1. If nothing else works, delete the main "SOTN Arcane Engine ReImagined (AERI)" folder and all sub folders and try a fresh download
+
+
 
 Advance debugging:
 (If none of the basic debugging works and you have coding knowledge then follow steps below)

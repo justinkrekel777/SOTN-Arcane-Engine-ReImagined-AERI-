@@ -1,0 +1,46 @@
+
+PATCH NOTES Version 1.1 - unreleased
+
+
+Bug fixes:
+
+    1. fixed an issue where spell inputs would not fire when statused
+    2. fixed an issue where shield dashing with alucard shield spell active or when statused would be slower than usual
+    3. added/improved functions that instantly reset GCD on hitstun and bonking to prevent being locked out of spellcasting for stupid reasons (may have missed some ram values for more rare hitstun scenarios)
+    4. added a condition to check if grav boots and skill of wolf are equipped before attempting their respective inputs (stupid oversight but hey, its fixed now)
+    5. fixed an issue where shield dash assist got stuck in a crouch loop after a hard fall or after casting spells in certain situations
+    6.
+
+
+Additions/reworks:
+
+    1. added manna prism counter option to right pillarbox
+    2. moved library card tracker to right pillarbox
+    3. added a gold tracker toggle to top right of screen that counts held gold + salable gem value in inventory
+    4. added toggle to force menu palette to AERI, system menu RGB values: 2,0,6
+    5. added chaining to hellfire when holding cast after shooting fireballs (works with down-canceling but requires timing the inputs correctly)
+    6. added weapon special attacks into the casting engine
+    7.
+
+
+Known issues:
+
+    1. input reading fails on octoshock cores (probably wont be fixed, just use the nymafast core like a normal person)
+    2. UI elements still visible after save-quit and during certain cutscenes (should be a simple fix if I can find useable ram data)
+    3. UI elements do not return after leaving shop menu until you leave the room (needs additional ram conditionals, a pain but doable... probably)
+    4.
+
+
+Planned changes/improvements: (no promises here)
+
+    1. figure out how to recode entire input system to not be reliant on referenc IDs in config and read direct from bizhawk {high priority, ongoing}
+    2. add a setup menu so that users dont need to edit config directly unless debugging {low priority}
+    3. Make proper thematic UI for LC/manna/gold counts {low priority, in-progress}
+    4. add quickfires for all weapon specials into spell engine {low priority, complete}
+    5. add analog stick and L3/R3 support (right for stick spell wheel???) {low priority}
+    6. add next/prev spell buttons for better controller Qol {medium priority}
+    7. add UI indicator for powerful items like duplicator, alucard + rod/mablung, criss/vorpal {low priority}
+    8. automatic updates without destroying player configs {low priority, wtf even is a netcoding lol}
+    9. slim down amount of local variables throughout the code to allow new features {high priority, ongoing}
+    10.
+
