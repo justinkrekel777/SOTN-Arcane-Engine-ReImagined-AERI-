@@ -1,4 +1,4 @@
-# SOTN-Arcane-Engine-ReImagined-AERI-
+# SOTN-Arcane-Engine-ReImagined-AERI- Ver 1.0
 
 *DISCLAIMER*    
 -This is my first major scripting project and I am by no means a programmer    
