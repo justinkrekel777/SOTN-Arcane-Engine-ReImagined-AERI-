@@ -1,5 +1,4 @@
-
-PATCH NOTES Version 1.1 - unreleased
+PATCH NOTES Version 1.1 - 5/5/2026
 
 
 Bug fixes:
@@ -9,7 +8,8 @@ Bug fixes:
     3. added/improved functions that instantly reset GCD on hitstun and bonking to prevent being locked out of spellcasting for stupid reasons (may have missed some ram values for more rare hitstun scenarios)
     4. added a condition to check if grav boots and skill of wolf are equipped before attempting their respective inputs (stupid oversight but hey, its fixed now)
     5. fixed an issue where shield dash assist got stuck in a crouch loop after a hard fall or after casting spells in certain situations
-    6.
+    6. added a ram ID check for a shield in left hand before attempting shield dash (lets you back dash normally with 2h weapons or dual wielding instead of being stupid)
+    7.
 
 
 Additions/reworks:

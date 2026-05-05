@@ -627,10 +627,10 @@ local SPELL_DATA = {
     [SPELL_WING_SMASH] = { id = 7, name = "Wing Smash", cost = 8, steps = 7, stepframes = ws_sf, cooldown = ws_gcd, buffer = ws_buf },
     [SPELL_WOLF_DASH] = { id = 8, name = "Wolf Dash", cost = 10, steps = 6, stepframes = wd_sf, cooldown = wd_gcd, buffer = 0 },
     [SPELL_GRAVITY_JUMP] = { id = 9, name = "Gravity Jump", cost = 4, steps = 6, stepframes = gj_sf, cooldown = gj_gcd, buffer = 0 },
-    [SPELL_WEAPON_ARTS] = { id = 10, name = "Weapon Arts", cost = 5, steps = 5, stepframes = 2, cooldown = wa_gcd, buffer = 0 }
+    [SPELL_WEAPON_ARTS] = { id = 10, name = "Weapon Arts", cost = 0, steps = 5, stepframes = 2, cooldown = wa_gcd, buffer = 0 }
 }
 
--- weapon set ID table  recall
+-- weapon set ID table
 local weaponSet = {
   [18] = 1, -- basilard
   [20] = 1, -- combat knife
@@ -1020,6 +1020,17 @@ function ShieldDash_OK()
         and spell_cooldown <= 0
         and spell_state == 0
         and QueryNotTransformed()
+        and (
+            memory.readbyte(0x097C04) == 5 -- leather shield
+            or memory.readbyte(0x097C04) == 15 -- fire shield
+            or memory.readbyte(0x097C04) == 14 -- skull shield
+            or memory.readbyte(0x097C04) == 13 -- medusa shield
+            or memory.readbyte(0x097C04) == 6 -- knight shield
+            or memory.readbyte(0x097C04) == 7 -- iron shield
+            or memory.readbyte(0x097C04) == 11 -- goddess shield
+            or memory.readbyte(0x097C04) == 16 -- alucard shield
+            or memory.readbyte(0x097C04) == 10 -- dark shield
+            )
 end
 
 -- cast trigger check
@@ -1030,7 +1041,12 @@ function Cast_OK()
         and spell_state == 0
         and SELECTED_SPELL ~= 0
         and QueryNotTransformed()
-        and ((SELECTED_SPELL == 10) or (SELECTED_SPELL ~= 10 and ramTileCollide ~= 32)) --allow weapon arts to bypass grounded check
+        and QueryWeaponSpecialSet() ~= 0
+        and (
+            (SELECTED_SPELL == 10) and (QueryWeaponSpecialSet() ~= 3) --check for not heaven sword (bypass grounded)
+            or (SELECTED_SPELL == 10 and QueryWeaponSpecialSet() == 3 and memory.readbyte(0x097C00) == memory.readbyte(0x097C04)) --check for dual heaven sword (bypass grounded)
+            or (SELECTED_SPELL ~= 10 and ramTileCollide ~= 32) --normal spell and grounded
+            )
 end
 
 ------------------------------------------------------------------------------------------------------------------------
@@ -1429,7 +1445,7 @@ if spell_cooldown == 0 then
 end
 
 ------------------------------------------------------------
--- CAST TRIGGER (add double tap quickfires?) recall
+-- CAST TRIGGER (add double tap quickfires?)
 ------------------------------------------------------------
 if Cast_OK() and CastPress then
     if  SELECTED_SPELL ~= SPELL_SWORD_BROTHERS then
@@ -1973,7 +1989,7 @@ end
 
 
 ------------------------------------------------------------
--- WEAPON ARTS  recall
+-- WEAPON ARTS
 ------------------------------------------------------------
 if spell_state == getSpellID(SPELL_WEAPON_ARTS) then
 
@@ -2083,12 +2099,6 @@ if spell_state == getSpellID(SPELL_WEAPON_ARTS) then
     end
 end
 
--- ←→ + [Attack]
-
---set2: ↓↘→ + [Attack]
-
---set3: heaven sword
-
 ------------------------------------------------------------------------------------------------------------------------
 -- OVERLAY UI DRAW BLOCK (Clears in map/menus)
 ------------------------------------------------------------------------------------------------------------------------
@@ -2108,6 +2118,7 @@ local CDmeterW = 50
 local CDmeterH = 3
 
 local textcolor = nil
+local costtext = nil
 
 if spell_cooldown > 0 then
     textcolor = "white"
@@ -2139,6 +2150,13 @@ elseif UIspellID == 9 then
     UIspellname = "   Gravity Jump   "
 elseif UIspellID == 10 then
     UIspellname = "  Critical  Arts  "
+end
+
+-- generate MP cost text
+if UIspellID == 10 or UIspellID == 0 then
+    costtext = ""
+elseif UIspellID ~= 10 then
+    costtext = getSpellCost(UIspellID) .. "MP"
 end
 
 ------------------------------------------------------------
@@ -2304,7 +2322,7 @@ end
 
 -- show spell cost
 if Spell_Cost_UI() then
-    gui.pixelText(MPTextX + 46, MPTextY + 41, getSpellCost(UIspellID) .. "MP", textcolor, 0x00000000, 1)
+    gui.pixelText(MPTextX + 46, MPTextY + 41, costtext, textcolor, 0x00000000, 1)
 end
 
 -- spellbook UI
