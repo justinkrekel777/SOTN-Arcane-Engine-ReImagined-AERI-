@@ -1,11 +1,5 @@
 # SOTN-Arcane-Engine-ReImagined-AERI-
 
-*DISCLAIMER*    
--This is my first major scripting project and I am by no means a programmer    
--There will almost certainly be bugs that I lack the knowledge and/or patience to fix, so consider yourself warned...    
--This engine was designed for and primarily tested on keyboard but should(?) work with most controller bindings    
--Analog stick controls are not compatible with my input parser yet(?) and will only perform their vanilla functions    
-
 
 What is AERI:              
 AERI is a lua script for Castlevania: Symphony of the Night that aims to rework how the movement and spell system works. This project was designed for casual/randomizer players and helps people like me that suck at fighting game inputs and/or get wrist pain playing SOTN. Most options can be customized/disabled in the config in order to fit personal preference. Script runs alongside SOTN so standard combos for spells/movement will still work as they do in vanilla.
