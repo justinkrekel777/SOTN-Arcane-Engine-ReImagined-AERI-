@@ -12,7 +12,7 @@ AERI is a lua script for Castlevania: Symphony of the Night that aims to rework 
 
 
 Getting started with AERI:
-1. Download the latest SOTN Arcane Engine ReImagined (AERI).zip from github
+1. Download the latest release from https://github.com/justinkrekel777/SOTN-Arcane-Engine-ReImagined-AERI-/releases
 2. Unzip and place the main "SOTN Arcane Engine ReImagined (AERI)" folder into BizHawk's Lua folder
 3. Leave all file locations/names alone since the script references file paths with the main folder as the root
 4. Open the config to familiarize yourself with the controls and edit whatever controls you want
