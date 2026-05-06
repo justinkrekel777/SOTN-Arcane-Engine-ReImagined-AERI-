@@ -5,7 +5,7 @@
 -- Please ignore any and all spaghetti code. I am not a programmer, nor do I want to be :)
 
 -- Script by: Justin Krekel
-
+-- Version 1.2
 
 
 
@@ -650,7 +650,7 @@ local weaponSet = {
   [17] = 2, -- sword of dawn
   [103] = 1, -- zwei hander
   [107] = 1, -- obsidian sword
-  [100] = 1, -- katana
+  [100] = 2, -- katana
   [139] = 2, -- osafune katana
   [140] = 2, -- masamune
   [4] = 1, -- shield rod
@@ -1030,10 +1030,12 @@ function ShieldDash_OK()
             or memory.readbyte(0x097C04) == 11 -- goddess shield
             or memory.readbyte(0x097C04) == 16 -- alucard shield
             or memory.readbyte(0x097C04) == 10 -- dark shield
+            or memory.readbyte(0x097C04) == 12 -- shaman shield
+            or memory.readbyte(0x097C04) == 167 -- alucart shield shield
             )
 end
 
--- cast trigger check
+-- cast trigger chec
 function Cast_OK()
     return CanControl()
         and HasMP(SELECTED_SPELL)
@@ -1041,11 +1043,10 @@ function Cast_OK()
         and spell_state == 0
         and SELECTED_SPELL ~= 0
         and QueryNotTransformed()
-        and QueryWeaponSpecialSet() ~= 0
         and (
-            (SELECTED_SPELL == 10) and (QueryWeaponSpecialSet() ~= 3) --check for not heaven sword (bypass grounded)
+            (SELECTED_SPELL ~= 10 and ramTileCollide ~= 32) --normal spell and grounded
             or (SELECTED_SPELL == 10 and QueryWeaponSpecialSet() == 3 and memory.readbyte(0x097C00) == memory.readbyte(0x097C04)) --check for dual heaven sword (bypass grounded)
-            or (SELECTED_SPELL ~= 10 and ramTileCollide ~= 32) --normal spell and grounded
+            or (SELECTED_SPELL == 10) and (QueryWeaponSpecialSet() ~= 3) --check for not heaven sword (bypass grounded)
             )
 end
 
@@ -1497,7 +1498,6 @@ if spell_state == getSpellID(SPELL_SUMMON_SPIRIT) then
         elseif spell_step == 7 then
             InputsToNeutral()
             pad["P1 □"] = true
-            pad["P1 ○"] = true
 
         end
 
@@ -1523,7 +1523,6 @@ if spell_state == getSpellID(SPELL_SUMMON_SPIRIT) then
         elseif spell_step == 7 then
             InputsToNeutral()
             pad["P1 □"] = true
-            pad["P1 ○"] = true
 
         end
     end
@@ -1578,7 +1577,6 @@ if spell_state == getSpellID(SPELL_TETRA_SPIRIT) then
         elseif spell_step == 20 then
             InputsToNeutral()
             pad["P1 □"] = true
-            pad["P1 ○"] = true
 
         end
 
@@ -1610,7 +1608,6 @@ if spell_state == getSpellID(SPELL_TETRA_SPIRIT) then
         elseif spell_step == 20 then
             InputsToNeutral()
             pad["P1 □"] = true
-            pad["P1 ○"] = true
 
         end
     end
@@ -1661,7 +1658,6 @@ if spell_state == getSpellID(SPELL_HELLFIRE) then
         elseif spell_step == 7 then
             InputsToNeutral()
             pad["P1 □"] = true
-            pad["P1 ○"] = true
 
         end
 
@@ -1688,7 +1684,6 @@ if spell_state == getSpellID(SPELL_HELLFIRE) then
         elseif spell_step == 7 then
             InputsToNeutral()
             pad["P1 □"] = true
-            pad["P1 ○"] = true
 
         end
     end
@@ -1744,7 +1739,6 @@ if spell_state == getSpellID(SPELL_DARK_METAMORPHOSIS) then
         elseif spell_step == 8 then
             InputsToNeutral()
             pad["P1 □"] = true
-            pad["P1 ○"] = true
 
         end
 
@@ -1776,7 +1770,6 @@ if spell_state == getSpellID(SPELL_DARK_METAMORPHOSIS) then
         elseif spell_step == 8 then
             InputsToNeutral()
             pad["P1 □"] = true
-            pad["P1 ○"] = true
 
         end
     end
@@ -1840,7 +1833,6 @@ if spell_state == getSpellID(SPELL_SOUL_STEAL) then
         elseif spell_step == 10 then
             InputsToNeutral()
             pad["P1 □"] = true
-            pad["P1 ○"] = true
 
         end
 
@@ -1880,7 +1872,6 @@ if spell_state == getSpellID(SPELL_SOUL_STEAL) then
         elseif spell_step == 10 then
             InputsToNeutral()
             pad["P1 □"] = true
-            pad["P1 ○"] = true
 
         end
     end
@@ -1940,7 +1931,6 @@ if spell_state == getSpellID(SPELL_SWORD_BROTHERS) then
         elseif spell_step == 32 then
             InputsToNeutral()
             pad["P1 □"] = true
-            pad["P1 ○"] = true
 
         end
 
@@ -1976,7 +1966,6 @@ if spell_state == getSpellID(SPELL_SWORD_BROTHERS) then
         elseif spell_step == 32 then
             InputsToNeutral()
             pad["P1 □"] = true
-            pad["P1 ○"] = true
 
         end
     end
