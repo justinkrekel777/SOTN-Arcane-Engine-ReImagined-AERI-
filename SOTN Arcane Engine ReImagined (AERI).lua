@@ -5,8 +5,7 @@
 -- Please ignore any and all spaghetti code. I am not a programmer, nor do I want to be :)
 
 -- Script by: Justin Krekel
--- Version 1.2
-
+Version = "1.1.2"
 
 
 ------------------------------------------------------------------------------------------------------------------------
@@ -16,23 +15,23 @@
 -- CUSTOM ASSET LOADER
 ------------------------------------------------------------
 gui.clearImageCache()
-local splashscreen_img = ".\\Assets\\Splash_Screen.png"
-local logo_img = ".\\Assets\\AERI_Logo.png"
-local spellframe_img = ".\\Assets\\Spell_Frame.png"
-local spellframehanger_img = ".\\Assets\\Spell_Frame_Hanger.png"
-local cdglassframe_img = ".\\Assets\\Cooldown_Meter_Frame.png"
-local batanim_img = ".\\Assets\\bat_flap_sheet_glow.png"
-local wolfanim_img = ".\\Assets\\wolf_dash_sheet.png"
-local gravanim_img = ".\\Assets\\nyanucard_sheet.png"
-local dashanim_img = ".\\Assets\\shield_dash_sheet.png"
-local mp_arrow_img = ".\\Assets\\MP_dagger1.png"
-local nomp_arrow_img = ".\\Assets\\MP_dagger2.png"
-local mp_arrow_nomana_img = ".\\Assets\\manna_prism.png"
-local mannaprism_img = ".\\Assets\\manna_prism.png"
-local swordbro_img = ".\\Assets\\sword_bro1.png"
-local noswordbro_img = ".\\Assets\\sword_bro2.png"
-local librarycard_img = ".\\Assets\\library_card.png"
-local wallet_img = ".\\Assets\\treasure_chest.png"
+splashscreen_img = ".\\Assets\\Splash_Screen.png"
+logo_img = ".\\Assets\\AERI_Logo.png"
+spellframe_img = ".\\Assets\\Spell_Frame.png"
+spellframehanger_img = ".\\Assets\\Spell_Frame_Hanger.png"
+cdglassframe_img = ".\\Assets\\Cooldown_Meter_Frame.png"
+batanim_img = ".\\Assets\\bat_flap_sheet_glow.png"
+wolfanim_img = ".\\Assets\\wolf_dash_sheet.png"
+gravanim_img = ".\\Assets\\nyanucard_sheet.png"
+dashanim_img = ".\\Assets\\shield_dash_sheet.png"
+mp_arrow_img = ".\\Assets\\MP_dagger1.png"
+nomp_arrow_img = ".\\Assets\\MP_dagger2.png"
+mp_arrow_nomana_img = ".\\Assets\\manna_prism.png"
+mannaprism_img = ".\\Assets\\manna_prism.png"
+swordbro_img = ".\\Assets\\sword_bro1.png"
+noswordbro_img = ".\\Assets\\sword_bro2.png"
+librarycard_img = ".\\Assets\\library_card.png"
+wallet_img = ".\\Assets\\treasure_chest.png"
 
 ------------------------------------------------------------
 -- ANIMATION SYSTEM INITIALIZATION
@@ -184,12 +183,13 @@ local dash_anim = CreateAnimation(
 ------------------------------------------------------------
 -- CORE INITIALIZATION WAIT
 ------------------------------------------------------------
-local REQUIRED_SYSTEM = "PSX"  -- adjust if needed
+local REQUIRED_SYSTEM = "PSX"
 function WaitForCorrectCore()
     while emu.getsystemid() ~= REQUIRED_SYSTEM do
         gui.clearGraphics()
         gui.drawImage(splashscreen_img, 0, 0)
         gui.pixelText(157, 183, "Waiting for PSX core...", "white", 0x80000000, 1)
+        gui.pixelText(0, 0,"AERI v" ..  Version, "white", 0x80000000, 1)
         emu.frameadvance()
     end
 end
@@ -199,7 +199,7 @@ WaitForCorrectCore()
 -- GAME START WAIT
 ------------------------------------------------------------
 function WaitForGameStart()
-    while memory.read_u16_le(0x097BA4) == 0 or memory.read_u16_le(0x097BA4) > 2000 or memory.read_u16_le(0x097BB4) == 0 or memory.read_u16_le(0x097BB4) > 2000 do
+    while memory.read_u16_le(0x097BA4) == 0 or memory.read_u32_le(0x097BA4) > 2000 or memory.read_u16_le(0x097BB4) == 0 or memory.read_u16_le(0x097BB4) > 2000 do
         gui.clearGraphics()
         emu.frameadvance()
     end
@@ -317,10 +317,12 @@ local Shield_Dash_Button = config["Shield_Dash_Button"]
 local ws_sf  = StringToNumber(config["Wing_Smash_STEPFRAMES"])
 local ws_gcd = StringToNumber(config["Wing_Smash_GLOBALCOOLDOWN"])
 local ws_buf  = StringToNumber(config["Wing_Smash_BUFFER"])
+local ws_dtw = StringToNumber(config["Wing_Smash_DOUBLETAPWINDOW"])
 local wd_sf  = StringToNumber(config["Wolf_Dash_STEPFRAMES"])
 local wd_gcd = StringToNumber(config["Wolf_Dash_GLOBALCOOLDOWN"])
 local gj_sf  = StringToNumber(config["Gravity_Jump_STEPFRAMES"])
 local gj_gcd = StringToNumber(config["Gravity_Jump_GLOBALCOOLDOWN"])
+local gj_dtw = StringToNumber(config["Gravity_Jump_DOUBLETAPWINDOW"])
 local sd_iw = StringToNumber(config["Shield_Dash_INTERVALWAIT"])
 local sd_afd = StringToNumber(config["Shield_Dash_AUTOFIREDELAY"])
 local wa_gcd = StringToNumber(config["Weapon_Arts_GLOBALCOOLDOWN"])
@@ -580,7 +582,7 @@ local bat_prevLeft = false
 local bat_prevRight = false
 local bat_lastLeftPressFrame = -999
 local bat_lastRightPressFrame = -999
-local bat_doubleTapWindow = 20
+local bat_doubleTapWindow = ws_dtw
 local direction_tracking = false
 local lastLRFrame = -999
 local bat_autoChain = false
@@ -589,7 +591,7 @@ local bat_autoChain = false
 local grav_upRisingEdge = nil
 local grav_prevUpPress = false
 local grav_lastUpPressFrame = -999
-local grav_doubleTapWindow = 20
+local grav_doubleTapWindow = gj_dtw
 local grav_hasleap = nil
 local HasLanded = true
 
@@ -692,6 +694,11 @@ function GlobalPause()
 
     -- BLOCK execution in shop
     if ramShop == 1 then
+        return false
+    end
+
+    -- BLOCK execution in LC cutscene
+    if ramFormHandler == 245 or ramFormHandler == 244 then
         return false
     end
 
@@ -891,6 +898,31 @@ function QueryWeaponSpecialSet()
     return weaponSet[weaponID] or 0
 end
 
+-- checks for shield in left hand
+function QueryDashableLeftHand()
+    return (
+            memory.readbyte(0x097C04) == 5 -- leather shield
+            or memory.readbyte(0x097C04) == 15 -- fire shield
+            or memory.readbyte(0x097C04) == 14 -- skull shield
+            or memory.readbyte(0x097C04) == 13 -- medusa shield
+            or memory.readbyte(0x097C04) == 6 -- knight shield
+            or memory.readbyte(0x097C04) == 7 -- iron shield
+            or memory.readbyte(0x097C04) == 11 -- goddess shield
+            or memory.readbyte(0x097C04) == 16 -- alucard shield
+            or memory.readbyte(0x097C04) == 10 -- dark shield
+            or memory.readbyte(0x097C04) == 12 -- shaman shield
+            or memory.readbyte(0x097C04) == 167 -- alucart shield
+            or memory.readbyte(0x097C04) == 8 -- axelord shield
+            or memory.readbyte(0x097C04) == 9 -- herald shield
+            or memory.readbyte(0x097C04) == 163 -- vorpal blade
+            or memory.readbyte(0x097C04) == 164 -- crissaegrim
+            or memory.readbyte(0x097C04) == 77 -- buffalo stars
+            or memory.readbyte(0x097C04) == 76 -- cross shuriken
+            or memory.readbyte(0x097C04) == 78 -- flame stars
+            or memory.readbyte(0x097C04) == 75 -- shuriken
+            )
+end
+
 -- checks if alucard has been hitstunned or and resets running cooldowns
 function QuerySpellReset()
     if (ramFormHandler == 48 or ramFormHandler == 49 or ramFormHandler == 50 or ramFormHandler == 52) -- hit stun
@@ -1020,19 +1052,6 @@ function ShieldDash_OK()
         and spell_cooldown <= 0
         and spell_state == 0
         and QueryNotTransformed()
-        and (
-            memory.readbyte(0x097C04) == 5 -- leather shield
-            or memory.readbyte(0x097C04) == 15 -- fire shield
-            or memory.readbyte(0x097C04) == 14 -- skull shield
-            or memory.readbyte(0x097C04) == 13 -- medusa shield
-            or memory.readbyte(0x097C04) == 6 -- knight shield
-            or memory.readbyte(0x097C04) == 7 -- iron shield
-            or memory.readbyte(0x097C04) == 11 -- goddess shield
-            or memory.readbyte(0x097C04) == 16 -- alucard shield
-            or memory.readbyte(0x097C04) == 10 -- dark shield
-            or memory.readbyte(0x097C04) == 12 -- shaman shield
-            or memory.readbyte(0x097C04) == 167 -- alucart shield shield
-            )
 end
 
 -- cast trigger chec
@@ -1046,7 +1065,7 @@ function Cast_OK()
         and (
             (SELECTED_SPELL ~= 10 and ramTileCollide ~= 32) --normal spell and grounded
             or (SELECTED_SPELL == 10 and QueryWeaponSpecialSet() == 3 and memory.readbyte(0x097C00) == memory.readbyte(0x097C04)) --check for dual heaven sword (bypass grounded)
-            or (SELECTED_SPELL == 10) and (QueryWeaponSpecialSet() ~= 3) --check for not heaven sword (bypass grounded)
+            or (SELECTED_SPELL == 10) and (QueryWeaponSpecialSet() == 1 or QueryWeaponSpecialSet() == 2) --check for not heaven sword (bypass grounded)
             )
 end
 
@@ -1400,9 +1419,11 @@ if sd_assist() and ShieldDash_OK() and Shield_Dash_Press then
     end
 
     -- STEP 1: CIRCLE PRESS
-    if sd_state == 1 then
+    if sd_state == 1  then
         InputsToNeutral()
-        pad["P1 ○"] = true
+        if QueryDashableLeftHand()  then
+            pad["P1 ○"] = true
+        end
 
         if sd_timer >= sd_afd then
             sd_timer = 0

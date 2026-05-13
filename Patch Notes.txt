@@ -1,46 +1,40 @@
-PATCH NOTES Version 1.1 - 5/5/2026
+PATCH NOTES Version 1.1.2 5/13/2026
 
 
 Bug fixes:
 
-    1. fixed an issue where spell inputs would not fire when statused
-    2. fixed an issue where shield dashing with alucard shield spell active or when statused would be slower than usual
-    3. added/improved functions that instantly reset GCD on hitstun and bonking to prevent being locked out of spellcasting for stupid reasons (may have missed some ram values for more rare hitstun scenarios)
-    4. added a condition to check if grav boots and skill of wolf are equipped before attempting their respective inputs (stupid oversight but hey, its fixed now)
-    5. fixed an issue where shield dash assist got stuck in a crouch loop after a hard fall or after casting spells in certain situations
-    6. added a ram ID check for a shield in left hand before attempting shield dash (lets you back dash normally with 2h weapons or dual wielding instead of being stupid)
-    7.
+    1. fixed a visual bug introduced in the 1.1 release that allowed critical arts cooldown to run even without a spec weapon equipped
+    2. fixed issues with some shield equip IDs not being flagged properly in the shield dash run check
+    3. fixed an issue where the katana was classed under the wrong spec weapon moveset
+    4. fixed signing error on wingsmash buffer clamp equation that would cause execution to get stuck on when using high buffer values
+    5.
 
 
 Additions/reworks:
 
-    1. added manna prism counter option to right pillarbox
-    2. moved library card tracker to right pillarbox
-    3. added a gold tracker toggle to top right of screen that counts held gold + salable gem value in inventory
-    4. added toggle to force menu palette to AERI, system menu RGB values: 2,0,6
-    5. added chaining to hellfire when holding cast after shooting fireballs (works with down-canceling but requires timing the inputs correctly)
-    6. added weapon special attacks into the casting engine
-    7.
+    1. added normal back dash chaining when not holding a shield in the left hand (QoL for people that want to use alternate loadouts)
+    2. added fast back dash chaining when any throwing star, criss, or vorpal is in left hand (timings are basically the same as shields so I just added them to the whitelist)
+    3. added the option to tweak the double tap window for wingsmash and gravity jump in the config (just a nice QoL/accessibility option)
+    4.
+
 
 
 Known issues:
 
     1. input reading fails on octoshock cores (probably wont be fixed, just use the nymafast core like a normal person)
-    2. UI elements still visible after save-quit and during certain cutscenes (should be a simple fix if I can find useable ram data)
-    3. UI elements do not return after leaving shop menu until you leave the room (needs additional ram conditionals, a pain but doable... probably)
-    4.
+    2. UI elements still visible after save-quit, during load screens, and during certain cutscenes
+    3. UI elements sometimes not reappear until a room transition after leaving the shop menu
 
 
 Planned changes/improvements: (no promises here)
 
     1. figure out how to recode entire input system to not be reliant on referenc IDs in config and read direct from bizhawk {high priority, ongoing}
-    2. add a setup menu so that users dont need to edit config directly unless debugging {low priority}
-    3. Make proper thematic UI for LC/manna/gold counts {low priority, in-progress}
-    4. add quickfires for all weapon specials into spell engine {low priority, complete}
+    2. slim down amount of local variables throughout the code to allow new features {high priority, ongoing}
+    3. add a setup menu so that users dont need to edit config directly unless debugging {low priority}
+    4. automatic updates without destroying player configs {low priority, wtf even is a netcoding lol}
     5. add analog stick and L3/R3 support (right for stick spell wheel???) {low priority}
     6. add next/prev spell buttons for better controller Qol {medium priority}
     7. add UI indicator for powerful items like duplicator, alucard + rod/mablung, criss/vorpal {low priority}
-    8. automatic updates without destroying player configs {low priority, wtf even is a netcoding lol}
-    9. slim down amount of local variables throughout the code to allow new features {high priority, ongoing}
-    10.
+    8. Make proper thematic UI for LC/manna/gold counts {low priority}
+    9. cheat option to give familiars lvl50 on pick-up (let them actually use special abilities for fun sake?) {low-priority}
 
